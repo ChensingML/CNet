@@ -1,2 +1,4 @@
 # CNeutralNet
-An (not so good) Neutral Net, used old way to code.
+An Neutral Network test, Created by Chen.ZH  
+## Supports
++ Backpropagation
