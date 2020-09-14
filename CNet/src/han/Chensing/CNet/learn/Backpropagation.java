@@ -29,6 +29,7 @@ public class Backpropagation implements Train,Serializable
 	{
 		Log.i("START TRAINING");
 		init(net,data);
+		boolean isBreak=false;
 		int every=data.trainTimes/10;
 		int k=0;
 		System.out.print("CNet:[INFO] Train progress:");
@@ -39,12 +40,17 @@ public class Backpropagation implements Train,Serializable
 				//训练集每个小集循环
 				forward(j,false);//前向传播
 				back();
+				if(Math.abs(errorAll)<data.wantsMse){
+					isBreak=true;
+					break;
+				}
 				errorAll=0;
 			}
 			if(k==every){
 				k=0;
 				System.out.print("=");
 			}
+			if(isBreak)break;
 		}
 		System.out.println();
 		Log.i("Train done");
@@ -105,11 +111,13 @@ public class Backpropagation implements Train,Serializable
 	
 	private void back(){
 		int hiddenS=config.numberOfHiddenLayer;
-		ArrayList<HiddenLayer> hs=net.getHiddenLayers().getLayers();
+		ArrayList<Layer> hs=new ArrayList<>();
+		hs.addAll(net.getHiddenLayers().getLayers());
+		hs.add(net.getOutputLayer());
 		if(hiddenS>0){
 			for(int i=hiddenS-1;i!=-1;i--){
 				//反向遍历隐藏层
-				HiddenLayer h=hs.get(i);
+				Layer h=hs.get(i);
 				ArrayList<Neuron> ns=h.getNeurons();
 				for(Neuron n:ns){
 					//里面的所有神经元
@@ -123,50 +131,31 @@ public class Backpropagation implements Train,Serializable
 				}
 			}
 		}
-		ArrayList<Neuron> input=net.getInputLayer().getNeurons();
-		for(Neuron n:input){
-			ArrayList<Weight> ws=n.getOutputWeights();
-			//累加错误
-			double temp=0;
-			for(Weight w:ws){
-				temp+=w.getValue()*w.getRightNeuron().getError();
-			}
-			n.setError(temp);
-		}
 		
 		//修复权值
 		//隐藏层
+		ArrayList<Layer> lays=new ArrayList<>();
 		if(hiddenS>0){
-			for(HiddenLayer h:hs){
-				ArrayList<Neuron> ns=h.getNeurons();
-				for(Neuron n:ns){
-					ArrayList<Weight> ws=n.getInputWeights();
-					for(Weight w:ws){
-						double newW=0;
-						newW=w.getValue()+
-							data.lambda*
-							n.getError()*
-							MathUtil.acCount(n.getOutput(),n.getFunction().getFunctionType())*
-							w.getLeftNeuron().getOutput();
-						w.setValue(newW);
-					}
-				}
-			}
+			lays.addAll(net.getHiddenLayers().getLayers());
 		}
 		
 		//输出层
-
-		ArrayList<Neuron> ns=net.getOutputLayer().getNeurons();
-		for(Neuron n:ns){
-			ArrayList<Weight> ws=n.getInputWeights();
-			for(Weight w:ws){
-				double newW=0;
-				newW=w.getValue()+
-					data.lambda*
-					n.getError()*
-					MathUtil.acCount(n.getOutput(),n.getFunction().getFunctionType())*
-					w.getLeftNeuron().getOutput();
-				w.setValue(newW);
+		lays.add(net.getOutputLayer());
+		
+		//修复
+		for(Layer h:lays){
+			ArrayList<Neuron> ns=h.getNeurons();
+			for(Neuron n:ns){
+				ArrayList<Weight> ws=n.getInputWeights();
+				for(Weight w:ws){
+					double newW=0;
+					newW=w.getValue()+
+						data.lambda*
+						n.getError()*
+						MathUtil.acCount(n.getOutput(),n.getFunction().getFunctionType())*
+						w.getLeftNeuron().getOutput();
+					w.setValue(newW);
+				}
 			}
 		}
 	}

@@ -23,8 +23,9 @@ public class TestMain{
 			e.printStackTrace();
 		}
 		assert data==null;
-		data.trainTimes=10000;
+		data.trainTimes=3000;
 		data.lambda=0.01;
+		data.wantsMse=0;
 		data.testSet=new double[][]{
 			{5.0,3.3,1.4,0.2},
 			{5.7,2.8,4.1,1.3},
@@ -37,14 +38,15 @@ public class TestMain{
 		};
 		n.TRAIN(data);
 		n.TestAndPrint(data);
-		/*序列化测试，不管他
 		try{
 			byte[] bs=n.getNetBytes();
 			File f=new File("/storage/emulated/0/AppProjects/Cnet.net");
-			CNeutralNet gets=CNeutralNet.getNet(bs);
-			//Log.i("suc");
+			FileOutputStream fos=new FileOutputStream(f);
+			fos.write(bs);
+			fos.flush();
+			fos.close();
 		}catch(Exception e){
 			e.printStackTrace();
-		}*/
+		}
 	}
 }
